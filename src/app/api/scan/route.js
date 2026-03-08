@@ -2,27 +2,12 @@ import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { category, market, sources } = await req.json();
+    const body = await req.json();
+    const { category, market, prompt: customPrompt } = body;
 
-    const sourcesList = sources.join(", ");
-
-    const prompt = `You are a product trend analyst specialising in e-commerce for West African markets.
-
-Research and identify the TOP 10 fastest-selling, trending products RIGHT NOW in the "${category}" niche for the "${market}" market.
-Sources to consider: ${sourcesList}
-
-For each product provide:
-1. Specific product name (include brand names)
-2. Heat score (0-100)
-3. isHot boolean
-4. isRising boolean
-5. Sources array (ONLY use: aliexpress, temu, meta_ads, google)
-6. Short category tag
-7. 2-3 sentence insight on WHY it's trending
-8. Specific action for "Fabian Stores" (small ${market} health & wellness e-commerce store)
-
-Respond ONLY with valid JSON, no markdown, no code fences:
-{"scanTime":"ISO","topInsight":"one sentence","products":[{"name":"","heatScore":0,"isHot":true,"isRising":false,"sources":[],"category":"","insight":"","suggestedAction":""}]}`;
+    const prompt = customPrompt || `You are an expert e-commerce product trend analyst for West African markets.
+Research the TOP 10 fastest-selling trending products in "${category}" for "${market}".
+Respond ONLY with valid JSON no markdown: {"scanTime":"ISO","topInsight":"","products":[{"name":"","heatScore":0,"isHot":true,"isRising":false,"sources":[],"category":"","insight":"","suggestedAction":"","trendData":[45,50,55,60,65,70,72,75,78,80,85,88],"trendWeeks":["Dec W1","Dec W2","Dec W3","Dec W4","Jan W1","Jan W2","Jan W3","Jan W4","Feb W1","Feb W2","Feb W3","Mar W1"],"competitors":[{"name":"","platform":"","detail":"","url":""}]}]}`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -33,7 +18,7 @@ Respond ONLY with valid JSON, no markdown, no code fences:
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 4000,
+        max_tokens: 8000,
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         messages: [{ role: "user", content: prompt }],
       }),
@@ -45,11 +30,7 @@ Respond ONLY with valid JSON, no markdown, no code fences:
     }
 
     const data = await response.json();
-    const textBlocks = data.content
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("");
-
+    const textBlocks = data.content.filter(b => b.type === "text").map(b => b.text).join("");
     const jsonMatch = textBlocks.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON in response");
 
