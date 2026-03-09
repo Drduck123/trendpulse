@@ -714,4 +714,3 @@ Respond ONLY with valid JSON, no markdown, no code fences:
     </>
   );
 }
-
