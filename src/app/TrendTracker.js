@@ -1,26 +1,22 @@
 "use client";
 import { useState, useEffect } from "react";
 
-// ── MARKET COUNTRY CODES ──────────────────────────────────────────────────────
 const MARKET_CODES = { Nigeria: "NG", Ghana: "GH", Kenya: "KE", "West Africa": "NG", Global: "US" };
 
-// ── SOURCES ───────────────────────────────────────────────────────────────────
 const SOURCES = [
-  { id: "aliexpress", label: "AliExpress", icon: "🛒", color: "#0891B2",
-    // Sort by orders descending for high sales volume
+  { id: "aliexpress", label: "AliExpress", icon: "🛒", color: "#FF6B35",
     searchUrl: (q) => `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(q)}&SortType=total_tranpro_desc` },
-  { id: "temu", label: "Temu", icon: "🎯", color: "#0891B2",
-    // Best sellers sort
+  { id: "temu", label: "Temu", icon: "🎯", color: "#FF9F43",
     searchUrl: (q) => `https://www.temu.com/search_result.html?search_key=${encodeURIComponent(q)}&sort_type=best_seller` },
-  { id: "meta_ads", label: "Meta Ads", icon: "📱", color: "#1877F2",
+  { id: "meta_ads", label: "Meta Ads", icon: "📱", color: "#4ECDC4",
     searchUrl: (q, market) => `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=${MARKET_CODES[market]||"NG"}&q=${encodeURIComponent(q)}&search_type=keyword_unordered&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped` },
-  { id: "google", label: "Google Trends", icon: "📈", color: "#34A853",
+  { id: "google", label: "Google Trends", icon: "📈", color: "#2ED573",
     searchUrl: (q, market) => `https://trends.google.com/trends/explore?q=${encodeURIComponent(q)}&geo=${MARKET_CODES[market]||"NG"}` },
-  { id: "tiktok", label: "TikTok", icon: "🎵", color: "#EE1D52",
+  { id: "tiktok", label: "TikTok", icon: "🎵", color: "#FF4757",
     searchUrl: (q) => `https://www.tiktok.com/search?q=${encodeURIComponent(q)}` },
-  { id: "pinterest", label: "Pinterest", icon: "📌", color: "#E60023",
+  { id: "pinterest", label: "Pinterest", icon: "📌", color: "#FF6B9D",
     searchUrl: (q) => `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(q)}&rs=typed` },
-  { id: "youtube", label: "YouTube", icon: "▶️", color: "#FF0000",
+  { id: "youtube", label: "YouTube", icon: "▶️", color: "#FF4757",
     searchUrl: (q) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}+review+2025&sp=CAMSAhAB` },
 ];
 
@@ -31,10 +27,8 @@ const CATEGORIES = [
 ];
 
 const MARKETS = ["Nigeria", "Ghana", "Kenya", "West Africa", "Global"];
-const PULSE_COLORS = ["#0891B2", "#0891B2", "#1877F2", "#34A853", "#9333EA", "#EC4899"];
 const HISTORY_KEY = "trendpulse_history_v2";
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
 function saveHistory(scans) {
   try { localStorage.setItem(HISTORY_KEY, JSON.stringify(scans)); } catch {}
 }
@@ -46,13 +40,18 @@ function PulseBar({ active }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 3, height: 20 }}>
       {[0,1,2,3,4].map(i => (
-        <div key={i} style={{ width: 3, borderRadius: 2, background: active ? PULSE_COLORS[i % PULSE_COLORS.length] : "#CBD5E1", animation: active ? `pulse-bar 1.1s ease-in-out ${i*0.15}s infinite` : "none", height: active ? undefined : 8 }} />
+        <div key={i} style={{
+          width: 3, borderRadius: 2,
+          background: active ? (i % 2 === 0 ? "#FFB800" : "rgba(255,184,0,0.45)") : "rgba(255,255,255,0.12)",
+          animation: active ? `pulse-bar 1.1s ease-in-out ${i*0.15}s infinite` : "none",
+          height: active ? undefined : 8,
+          transition: "all 0.3s"
+        }} />
       ))}
     </div>
   );
 }
 
-// ── TREND SPARKLINE ───────────────────────────────────────────────────────────
 function TrendSparkline({ data, color }) {
   if (!data || data.length < 2) return null;
   const max = Math.max(...data), min = Math.min(...data);
@@ -66,126 +65,141 @@ function TrendSparkline({ data, color }) {
   const lastVal = data[data.length - 1];
   const firstVal = data[0];
   const trend = lastVal > firstVal ? "↑" : lastVal < firstVal ? "↓" : "→";
-  const trendColor = lastVal > firstVal ? "#34A853" : lastVal < firstVal ? "#DC2626" : "#D97706";
+  const trendColor = lastVal > firstVal ? "#2ED573" : lastVal < firstVal ? "#FF4757" : "#FFB800";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <svg width={w} height={h} style={{ overflow: "visible" }}>
-        <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
-        <polyline points={`${pad},${h} ${pts} ${w-pad},${h}`} fill={color} fillOpacity="0.1" stroke="none" />
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+        <polyline points={`${pad},${h} ${pts} ${w-pad},${h}`} fill={color} fillOpacity="0.07" stroke="none" />
         {data.map((v, i) => {
           const x = pad + (i / (data.length - 1)) * (w - pad * 2);
           const y = pad + ((max - v) / range) * (h - pad * 2);
-          return <circle key={i} cx={x} cy={y} r="2.5" fill={color} opacity="0.7" />;
+          return <circle key={i} cx={x} cy={y} r="2" fill={color} opacity="0.7" />;
         })}
       </svg>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 800, color: trendColor, fontFamily: "monospace" }}>{trend}</div>
-        <div style={{ fontSize: 9, color: "#64748B" }}>{lastVal}/100</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: trendColor, fontFamily: "'DM Mono', monospace" }}>{trend}</div>
+        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontFamily: "'DM Mono', monospace" }}>{lastVal}/100</div>
       </div>
     </div>
   );
 }
 
-// ── LINK BADGE ────────────────────────────────────────────────────────────────
 function LinkBadge({ source, productName, market }) {
   const s = SOURCES.find(x => x.id === source);
   if (!s) return null;
   return (
     <a href={s.searchUrl(productName, market)} target="_blank" rel="noopener noreferrer"
       onClick={e => e.stopPropagation()}
-      style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, padding: "2px 8px", borderRadius: 20, background: `${s.color}15`, color: s.color, border: `1px solid ${s.color}30`, textDecoration: "none", transition: "all 0.15s", fontWeight: 600 }}
-      onMouseEnter={e => { e.currentTarget.style.background = `${s.color}35`; e.currentTarget.style.transform = "scale(1.05)"; }}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 4,
+        fontSize: 10, padding: "3px 9px", borderRadius: 20,
+        background: `${s.color}15`, color: s.color,
+        border: `1px solid ${s.color}35`, textDecoration: "none",
+        transition: "all 0.15s", fontWeight: 600,
+        fontFamily: "'Outfit', sans-serif"
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = `${s.color}28`; e.currentTarget.style.transform = "scale(1.04)"; }}
       onMouseLeave={e => { e.currentTarget.style.background = `${s.color}15`; e.currentTarget.style.transform = "scale(1)"; }}>
       {s.icon} {s.label} ↗
     </a>
   );
 }
 
-// ── TREND CARD ────────────────────────────────────────────────────────────────
 function TrendCard({ product, index, compact = false, market = "Nigeria" }) {
   const [expanded, setExpanded] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const heat = product.heatScore || 75;
-  const heatColor = heat >= 85 ? "#0891B2" : heat >= 70 ? "#D97706" : "#34A853";
+  const heatColor = heat >= 85 ? "#FFB800" : heat >= 70 ? "#FF6B35" : "#2ED573";
 
   return (
-    <div onClick={() => setExpanded(!expanded)} style={{
-      background: "linear-gradient(135deg,#F1F5F9,#E8EEF4)",
-      border: `1px solid ${expanded ? heatColor : "#CBD5E1"}`,
-      borderRadius: 12, padding: compact ? "10px 12px" : "14px 16px",
-      cursor: "pointer", transition: "all 0.25s",
-      boxShadow: expanded ? `0 8px 30px ${heatColor}30` : "0 2px 8px #00000040",
-      animation: `slide-in 0.4s ease ${index * 0.06}s both`,
-    }}>
+    <div
+      onClick={() => setExpanded(!expanded)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? "rgba(255,255,255,0.055)" : "rgba(255,255,255,0.03)",
+        border: `1px solid ${expanded ? heatColor + "55" : hovered ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)"}`,
+        borderLeft: `3px solid ${expanded || hovered ? heatColor : "transparent"}`,
+        borderRadius: 12, padding: compact ? "10px 12px" : "14px 16px",
+        cursor: "pointer", transition: "all 0.25s",
+        boxShadow: expanded ? `0 8px 40px ${heatColor}18` : "none",
+        animation: `slide-in 0.4s ease ${index * 0.06}s both`,
+      }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-        {/* Rank */}
-        <div style={{ minWidth: 28, height: 28, borderRadius: 7, background: `${heatColor}20`, border: `1px solid ${heatColor}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: heatColor, fontFamily: "monospace" }}>
+        <div style={{
+          minWidth: 30, height: 30, borderRadius: 8,
+          background: `${heatColor}14`,
+          border: `1px solid ${heatColor}28`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 11, fontWeight: 700, color: heatColor,
+          fontFamily: "'DM Mono', monospace", flexShrink: 0
+        }}>
           {String(index + 1).padStart(2, "0")}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: compact ? 11 : 13, fontWeight: 700, color: "#0F172A", fontFamily: "'Syne',sans-serif" }}>{product.name}</span>
-            {product.isHot && <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 20, background: "#0891B220", color: "#0891B2", fontWeight: 700, border: "1px solid #0891B240" }}>🔥 HOT</span>}
-            {product.isRising && <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 20, background: "#34A85320", color: "#34A853", fontWeight: 700, border: "1px solid #34A85340" }}>↑ RISING</span>}
+            <span style={{ fontSize: compact ? 12 : 13, fontWeight: 600, color: "#FFFFFF", fontFamily: "'Bricolage Grotesque', sans-serif" }}>{product.name}</span>
+            {product.isHot && (
+              <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 20, background: "rgba(255,71,87,0.14)", color: "#FF4757", fontWeight: 700, border: "1px solid rgba(255,71,87,0.28)", letterSpacing: "0.5px" }}>🔥 HOT</span>
+            )}
+            {product.isRising && (
+              <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 20, background: "rgba(46,213,115,0.12)", color: "#2ED573", fontWeight: 700, border: "1px solid rgba(46,213,115,0.25)", letterSpacing: "0.5px" }}>↑ RISING</span>
+            )}
           </div>
 
-          {/* Source links - now sorted by high sales volume */}
-          <div style={{ display: "flex", gap: 5, marginTop: 5, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 5, marginTop: 6, flexWrap: "wrap" }}>
             {(product.sources || []).map(src => <LinkBadge key={src} source={src} productName={product.name} market={market} />)}
-            {product.category && <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 20, background: "#9333EA15", color: "#A855F7", border: "1px solid #9333EA30" }}>{product.category}</span>}
+            {product.category && (
+              <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 20, background: "rgba(166,124,255,0.12)", color: "#A67CFF", border: "1px solid rgba(166,124,255,0.22)" }}>{product.category}</span>
+            )}
           </div>
 
-          {/* Sparkline if available */}
           {!compact && product.trendData && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: 9, color: "#64748B", marginBottom: 4 }}>TREND (12 weeks)</div>
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", marginBottom: 4, letterSpacing: "0.8px", textTransform: "uppercase" }}>12-week trend</div>
               <TrendSparkline data={product.trendData} color={heatColor} />
             </div>
           )}
         </div>
 
-        {/* Heat score */}
-        <div style={{ textAlign: "center", minWidth: 42 }}>
-          <div style={{ fontSize: 19, fontWeight: 900, color: heatColor, fontFamily: "monospace", lineHeight: 1 }}>{heat}</div>
-          <div style={{ fontSize: 8, color: "#64748B", marginTop: 1 }}>HEAT</div>
-          <div style={{ width: 34, height: 3, background: "#CBD5E1", borderRadius: 2, marginTop: 3 }}>
-            <div style={{ width: `${heat}%`, height: "100%", background: heatColor, borderRadius: 2 }} />
+        <div style={{ textAlign: "center", minWidth: 44, flexShrink: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: heatColor, fontFamily: "'DM Mono', monospace", lineHeight: 1, textShadow: `0 0 18px ${heatColor}55` }}>{heat}</div>
+          <div style={{ fontSize: 8, color: "rgba(255,255,255,0.28)", marginTop: 2, letterSpacing: "1px", textTransform: "uppercase" }}>heat</div>
+          <div style={{ width: 36, height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 2, marginTop: 5 }}>
+            <div style={{ width: `${heat}%`, height: "100%", background: `linear-gradient(90deg, ${heatColor}70, ${heatColor})`, borderRadius: 2 }} />
           </div>
         </div>
       </div>
 
-      {/* Expanded section */}
       {expanded && (
-        <div style={{ marginTop: 13, paddingTop: 13, borderTop: "1px solid #CBD5E1" }}>
-
-          {/* AI Insight */}
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
           {product.insight && (
-            <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.65, marginBottom: 10 }}>
-              <div style={{ color: "#0F172A", fontWeight: 600, marginBottom: 5, fontSize: 11 }}>💡 AI Insight</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.58)", lineHeight: 1.7, marginBottom: 12 }}>
+              <div style={{ color: "rgba(255,255,255,0.88)", fontWeight: 600, marginBottom: 5, fontSize: 11, letterSpacing: "0.5px" }}>💡 AI Insight</div>
               {product.insight}
             </div>
           )}
 
-          {/* Trend graph expanded */}
           {product.trendData && (
-            <div style={{ marginBottom: 10, padding: "10px 12px", background: "#F8FAFC", borderRadius: 8 }}>
-              <div style={{ fontSize: 10, color: "#64748B", marginBottom: 8 }}>📈 TREND OVER TIME (12 weeks)</div>
+            <div style={{ marginBottom: 12, padding: "12px 14px", background: "rgba(255,255,255,0.025)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginBottom: 8, letterSpacing: "0.8px", textTransform: "uppercase" }}>📈 Trend over time (12 weeks)</div>
               <TrendGraph data={product.trendData} color={heatColor} weeks={product.trendWeeks} />
             </div>
           )}
 
-          {/* Competitors */}
           {product.competitors && product.competitors.length > 0 && (
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 11, color: "#D97706", fontWeight: 600, marginBottom: 6 }}>🏪 Competitors / Dropshippers</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: "#FFB800", fontWeight: 600, marginBottom: 8, letterSpacing: "0.3px" }}>🏪 Competitors / Dropshippers</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {product.competitors.map((c, i) => (
-                  <div key={i} style={{ padding: "7px 10px", background: "#F8FAFC", borderRadius: 7, border: "1px solid #CBD5E1" }}>
-                    <div style={{ fontSize: 11, color: "#0F172A", fontWeight: 600 }}>{c.name}</div>
-                    <div style={{ fontSize: 10, color: "#64748B", marginTop: 2 }}>{c.platform} · {c.detail}</div>
+                  <div key={i} style={{ padding: "9px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontSize: 12, color: "#FFFFFF", fontWeight: 600 }}>{c.name}</div>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.38)", marginTop: 2 }}>{c.platform} · {c.detail}</div>
                     {c.url && (
                       <a href={c.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                        style={{ fontSize: 10, color: "#1877F2", textDecoration: "none", marginTop: 3, display: "block" }}>
+                        style={{ fontSize: 10, color: "#4ECDC4", textDecoration: "none", marginTop: 4, display: "block" }}>
                         View Store ↗
                       </a>
                     )}
@@ -195,16 +209,14 @@ function TrendCard({ product, index, compact = false, market = "Nigeria" }) {
             </div>
           )}
 
-          {/* Action */}
           {product.suggestedAction && (
-            <div style={{ padding: "8px 11px", background: "#0f4c2a", borderRadius: 8, color: "#16A34A", fontSize: 11, border: "1px solid #16803450", marginBottom: 10 }}>
+            <div style={{ padding: "10px 12px", background: "rgba(46,213,115,0.07)", borderRadius: 9, color: "#2ED573", fontSize: 11, border: "1px solid rgba(46,213,115,0.2)", marginBottom: 12, lineHeight: 1.6 }}>
               <strong>→ Action for Fabian Stores:</strong> {product.suggestedAction}
             </div>
           )}
 
-          {/* All platform links */}
-          <div style={{ paddingTop: 10, borderTop: "1px solid #E2E8F0" }}>
-            <div style={{ fontSize: 10, color: "#64748B", marginBottom: 6 }}>🔗 Search on all platforms (sorted by sales volume):</div>
+          <div style={{ paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", marginBottom: 8, letterSpacing: "0.5px" }}>🔗 Search all platforms:</div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {SOURCES.map(src => <LinkBadge key={src.id} source={src.id} productName={product.name} market={market} />)}
             </div>
@@ -215,7 +227,6 @@ function TrendCard({ product, index, compact = false, market = "Nigeria" }) {
   );
 }
 
-// ── TREND GRAPH (full) ────────────────────────────────────────────────────────
 function TrendGraph({ data, color, weeks }) {
   if (!data || data.length < 2) return null;
   const max = Math.max(...data), min = Math.min(...data);
@@ -230,54 +241,50 @@ function TrendGraph({ data, color, weeks }) {
   const fillPts = `${pad},${h} ${polyPts} ${w - pad},${h}`;
   const peakIdx = data.indexOf(max);
   const labels = weeks || data.map((_, i) => `W${i + 1}`);
-
   return (
     <div>
       <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", height: 80 }}>
         <defs>
           <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.01" />
           </linearGradient>
         </defs>
         <polygon points={fillPts} fill="url(#tg)" />
         <polyline points={polyPts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         {pts.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={i === peakIdx ? "2.5" : "1.5"} fill={i === peakIdx ? "#D97706" : color} opacity="0.9" />
+          <circle key={i} cx={p.x} cy={p.y} r={i === peakIdx ? "2.5" : "1.5"} fill={i === peakIdx ? "#FFB800" : color} opacity="0.9" />
         ))}
-        {/* Peak label */}
-        <text x={pts[peakIdx]?.x} y={pts[peakIdx]?.y - 4} textAnchor="middle" fontSize="3.5" fill="#D97706">PEAK</text>
+        <text x={pts[peakIdx]?.x} y={pts[peakIdx]?.y - 4} textAnchor="middle" fontSize="3.5" fill="#FFB800">PEAK</text>
       </svg>
-      {/* X-axis labels */}
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
         {[0, Math.floor(data.length / 3), Math.floor(data.length * 2 / 3), data.length - 1].map(i => (
-          <span key={i} style={{ fontSize: 9, color: "#64748B" }}>{labels[i]}</span>
+          <span key={i} style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", fontFamily: "'DM Mono', monospace" }}>{labels[i]}</span>
         ))}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-        <span style={{ fontSize: 9, color: "#64748B" }}>Low: {min}</span>
-        <span style={{ fontSize: 9, color: "#D97706" }}>Peak: {max}</span>
-        <span style={{ fontSize: 9, color: color }}>Now: {data[data.length - 1]}</span>
+        <span style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", fontFamily: "'DM Mono', monospace" }}>Low: {min}</span>
+        <span style={{ fontSize: 9, color: "#FFB800", fontFamily: "'DM Mono', monospace" }}>Peak: {max}</span>
+        <span style={{ fontSize: 9, color, fontFamily: "'DM Mono', monospace" }}>Now: {data[data.length - 1]}</span>
       </div>
     </div>
   );
 }
 
-// ── COMPARE COLUMN ────────────────────────────────────────────────────────────
 function CompareColumn({ scan, index, onRemove }) {
-  const colColors = ["#0891B2", "#1877F2", "#34A853", "#9333EA"];
+  const colColors = ["#FFB800", "#4ECDC4", "#2ED573", "#A67CFF"];
   const color = colColors[index % colColors.length];
   return (
-    <div style={{ flex: "0 0 295px", background: "#FFFFFF", border: `1px solid ${color}40`, borderRadius: 14, overflow: "hidden" }}>
-      <div style={{ background: `${color}18`, borderBottom: `1px solid ${color}30`, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+    <div style={{ flex: "0 0 295px", background: "rgba(255,255,255,0.03)", border: `1px solid ${color}22`, borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ background: `${color}0e`, borderBottom: `1px solid ${color}1a`, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 800, color, fontFamily: "'Syne',sans-serif" }}>{scan.category}</div>
-          <div style={{ fontSize: 10, color: "#64748B", marginTop: 2 }}>{scan.market} · {scan.timestamp}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color, fontFamily: "'Bricolage Grotesque', sans-serif" }}>{scan.category}</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.38)", marginTop: 2 }}>{scan.market} · {scan.timestamp}</div>
         </div>
-        <button onClick={() => onRemove(index)} style={{ background: "transparent", border: "1px solid #CBD5E1", borderRadius: 5, color: "#64748B", fontSize: 10, cursor: "pointer", padding: "2px 7px" }}>✕</button>
+        <button onClick={() => onRemove(index)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 5, color: "rgba(255,255,255,0.35)", fontSize: 10, cursor: "pointer", padding: "2px 7px" }}>✕</button>
       </div>
       {scan.results?.topInsight && (
-        <div style={{ padding: "8px 12px", borderBottom: "1px solid #E2E8F0", fontSize: 10, color: "#475569", lineHeight: 1.5 }}>🎯 {scan.results.topInsight}</div>
+        <div style={{ padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", fontSize: 10, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>🎯 {scan.results.topInsight}</div>
       )}
       <div style={{ padding: "8px", display: "flex", flexDirection: "column", gap: 6 }}>
         {(scan.results?.products || []).slice(0, 10).map((p, i) => <TrendCard key={i} product={p} index={i} compact market={scan.market} />)}
@@ -286,29 +293,37 @@ function CompareColumn({ scan, index, onRemove }) {
   );
 }
 
-// ── HISTORY CARD ──────────────────────────────────────────────────────────────
 function HistoryCard({ scan, onLoad, onDelete }) {
+  const [hovered, setHovered] = useState(false);
   const topProduct = scan.results?.products?.[0];
   const heatAvg = Math.round((scan.results?.products || []).reduce((a, p) => a + (p.heatScore || 0), 0) / Math.max((scan.results?.products || []).length, 1));
   return (
-    <div style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: 11, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.03)",
+        border: `1px solid ${hovered ? "rgba(255,184,0,0.22)" : "rgba(255,255,255,0.07)"}`,
+        borderRadius: 11, padding: "12px 14px",
+        display: "flex", alignItems: "center", gap: 12,
+        transition: "all 0.2s"
+      }}>
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", fontFamily: "'Syne',sans-serif" }}>{scan.category}</span>
-          <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 20, background: "#0891B215", color: "#0891B2", border: "1px solid #0891B230" }}>{scan.market}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF", fontFamily: "'Bricolage Grotesque', sans-serif" }}>{scan.category}</span>
+          <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 20, background: "rgba(255,184,0,0.1)", color: "#FFB800", border: "1px solid rgba(255,184,0,0.22)" }}>{scan.market}</span>
         </div>
-        <div style={{ fontSize: 10, color: "#64748B", marginTop: 3 }}>{scan.timestamp} · {scan.results?.products?.length || 0} products · avg heat {heatAvg}</div>
-        {topProduct && <div style={{ fontSize: 10, color: "#475569", marginTop: 3 }}>🥇 {topProduct.name}</div>}
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)", marginTop: 3, fontFamily: "'DM Mono', monospace" }}>{scan.timestamp} · {scan.results?.products?.length || 0} products · avg heat {heatAvg}</div>
+        {topProduct && <div style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>🥇 {topProduct.name}</div>}
       </div>
       <div style={{ display: "flex", gap: 6 }}>
-        <button onClick={() => onLoad(scan)} style={{ padding: "5px 12px", borderRadius: 7, background: "#0891B220", border: "1px solid #0891B240", color: "#0891B2", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Load</button>
-        <button onClick={() => onDelete(scan.id)} style={{ padding: "5px 8px", borderRadius: 7, background: "transparent", border: "1px solid #CBD5E1", color: "#64748B", fontSize: 11, cursor: "pointer" }}>✕</button>
+        <button onClick={() => onLoad(scan)} style={{ padding: "5px 12px", borderRadius: 7, background: "rgba(255,184,0,0.1)", border: "1px solid rgba(255,184,0,0.25)", color: "#FFB800", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Load</button>
+        <button onClick={() => onDelete(scan.id)} style={{ padding: "5px 8px", borderRadius: 7, background: "transparent", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.3)", fontSize: 11, cursor: "pointer" }}>✕</button>
       </div>
     </div>
   );
 }
 
-// ── EXPORT HELPERS ────────────────────────────────────────────────────────────
 function exportToCSV(scans) {
   const rows = [["Rank","Product","Heat","Hot","Rising","Sources","Category","Market","Insight","Action","Competitors"]];
   scans.forEach(scan => {
@@ -330,9 +345,9 @@ function exportToJSON(scans) {
 
 function exportToHTML(scans) {
   const rows = scans.flatMap(scan =>
-    (scan.results?.products||[]).map((p,i) => `<tr><td>${i+1}</td><td><strong>${p.name}</strong></td><td style="color:${p.heatScore>=85?"#0891B2":"#d97706"};font-weight:700">${p.heatScore}</td><td>${p.isHot?"🔥":""}${p.isRising?" ↑":""}</td><td>${scan.category}</td><td>${scan.market}</td><td style="font-size:12px">${p.insight||""}</td><td style="font-size:12px;color:#16a34a">${p.suggestedAction||""}</td><td style="font-size:11px">${(p.competitors||[]).map(c=>`${c.name} (${c.platform})`).join(", ")}</td></tr>`)
+    (scan.results?.products||[]).map((p,i) => `<tr><td>${i+1}</td><td><strong>${p.name}</strong></td><td style="color:${p.heatScore>=85?"#FFB800":"#FF6B35"};font-weight:700">${p.heatScore}</td><td>${p.isHot?"🔥":""}${p.isRising?" ↑":""}</td><td>${scan.category}</td><td>${scan.market}</td><td style="font-size:12px">${p.insight||""}</td><td style="font-size:12px;color:#2ED573">${p.suggestedAction||""}</td><td style="font-size:11px">${(p.competitors||[]).map(c=>`${c.name} (${c.platform})`).join(", ")}</td></tr>`)
   ).join("");
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fabian Stores Trend Report</title><style>body{font-family:sans-serif;padding:24px;background:#f8fafc}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#0f172a;color:#fff;padding:10px}td{padding:9px;border-bottom:1px solid #e2e8f0;vertical-align:top}tr:hover{background:#f1f5f9}</style></head><body><h1>📡 TrendPulse — Fabian Stores</h1><p>Generated: ${new Date().toLocaleString()}</p><table><thead><tr><th>#</th><th>Product</th><th>Heat</th><th>Status</th><th>Category</th><th>Market</th><th>Insight</th><th>Action</th><th>Competitors</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>TrendPulse — Fabian Stores</title><style>body{font-family:sans-serif;padding:24px;background:#06071A;color:#fff}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#0f102e;color:#FFB800;padding:10px}td{padding:9px;border-bottom:1px solid rgba(255,255,255,0.07);vertical-align:top}tr:hover{background:rgba(255,255,255,0.03)}</style></head><body><h1 style="color:#FFB800">📡 TrendPulse — Fabian Stores</h1><p style="color:rgba(255,255,255,0.4)">Generated: ${new Date().toLocaleString()}</p><table><thead><tr><th>#</th><th>Product</th><th>Heat</th><th>Status</th><th>Category</th><th>Market</th><th>Insight</th><th>Action</th><th>Competitors</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
   const blob = new Blob([html],{type:"text/html"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "fabian_trend_report.html"; a.click();
 }
@@ -344,7 +359,7 @@ function shareReport(scan) {
   if (navigator.share) {
     navigator.share({ title: "TrendPulse Report", text });
   } else {
-    navigator.clipboard.writeText(text).then(() => alert("Report copied to clipboard! Paste it in WhatsApp or anywhere."));
+    navigator.clipboard.writeText(text).then(() => alert("Report copied to clipboard!"));
   }
 }
 
@@ -355,7 +370,6 @@ function whatsappShare(scan) {
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
 }
 
-// ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function TrendTracker() {
   const [category, setCategory] = useState("Beauty & Skincare");
   const [market, setMarket] = useState("Ghana");
@@ -370,7 +384,6 @@ export default function TrendTracker() {
   const [lastRun, setLastRun] = useState(null);
   const [view, setView] = useState("results");
 
-  // Load history on mount
   useEffect(() => { setHistory(loadHistory()); }, []);
 
   const toggleSource = (id) => setActiveSources(prev => prev.includes(id) ? prev.filter(x=>x!==id) : [...prev,id]);
@@ -392,49 +405,7 @@ export default function TrendTracker() {
     const ticker = setInterval(() => { if (mi < msgs.length) setStatusMsg(msgs[mi++]); }, 1600);
     try {
       const sourcesList = activeSources.map(id => SOURCES.find(s=>s.id===id)?.label).filter(Boolean).join(", ");
-      const prompt = `You are an expert e-commerce product trend analyst for West African markets (Nigeria, Ghana, Kenya).
-
-Research the TOP 10 fastest-selling, trending products RIGHT NOW in the "${category}" niche for the "${market}" market.
-Sources: ${sourcesList}
-
-IMPORTANT RULES:
-- For AliExpress: find products with the HIGHEST order counts (100,000+ orders preferred)
-- For Temu: find actual best-selling products with high purchase numbers
-- For Meta Ads: find products with the most active ads running right now
-- Be SPECIFIC with product names — include brand names, model numbers, specifications
-- Find REAL competitor stores or dropshippers selling each product
-
-For EACH product provide ALL of these fields:
-1. name: specific product name with brand/model
-2. heatScore: 0-100 based on actual sales velocity and search volume
-3. isHot: boolean (true if trending strongly right now)
-4. isRising: boolean (true if newer, growing trend)
-5. sources: array using ONLY these IDs: aliexpress, temu, meta_ads, google, tiktok, pinterest, youtube
-6. category: short 2-3 word tag
-7. insight: 2-3 sentences on WHY it's trending with specific data (order counts, ad numbers, etc.)
-8. suggestedAction: specific action for "Fabian Stores" (${market} health & wellness e-commerce)
-9. trendData: array of 12 numbers (0-100) representing weekly trend over last 12 weeks — be realistic, show actual rise/fall pattern
-10. trendWeeks: array of 12 short week labels like ["Jan W1","Jan W2",...,"Mar W4"]
-11. competitors: array of 2-3 objects with: name (store/seller name), platform (AliExpress/Temu/Shopify/Instagram), detail (brief description), url (actual search URL)
-
-Respond ONLY with valid JSON, no markdown, no code fences:
-{
-  "scanTime":"ISO",
-  "topInsight":"one sentence about biggest opportunity",
-  "products":[{
-    "name":"",
-    "heatScore":0,
-    "isHot":true,
-    "isRising":false,
-    "sources":[],
-    "category":"",
-    "insight":"",
-    "suggestedAction":"",
-    "trendData":[45,48,52,55,60,65,72,78,82,85,88,90],
-    "trendWeeks":["Dec W1","Dec W2","Dec W3","Dec W4","Jan W1","Jan W2","Jan W3","Jan W4","Feb W1","Feb W2","Feb W3","Mar W1"],
-    "competitors":[{"name":"","platform":"","detail":"","url":""}]
-  }]
-}`;
+      const prompt = `You are an expert e-commerce product trend analyst for West African markets (Nigeria, Ghana, Kenya).\n\nResearch the TOP 10 fastest-selling, trending products RIGHT NOW in the "${category}" niche for the "${market}" market.\nSources: ${sourcesList}\n\nIMPORTANT RULES:\n- For AliExpress: find products with the HIGHEST order counts (100,000+ orders preferred)\n- For Temu: find actual best-selling products with high purchase numbers\n- For Meta Ads: find products with the most active ads running right now\n- Be SPECIFIC with product names — include brand names, model numbers, specifications\n- Find REAL competitor stores or dropshippers selling each product\n\nFor EACH product provide ALL of these fields:\n1. name: specific product name with brand/model\n2. heatScore: 0-100 based on actual sales velocity and search volume\n3. isHot: boolean (true if trending strongly right now)\n4. isRising: boolean (true if newer, growing trend)\n5. sources: array using ONLY these IDs: aliexpress, temu, meta_ads, google, tiktok, pinterest, youtube\n6. category: short 2-3 word tag\n7. insight: 2-3 sentences on WHY it's trending with specific data\n8. suggestedAction: specific action for "Fabian Stores" (${market} health & wellness e-commerce)\n9. trendData: array of 12 numbers (0-100) representing weekly trend over last 12 weeks\n10. trendWeeks: array of 12 short week labels\n11. competitors: array of 2-3 objects with: name, platform, detail, url\n\nRespond ONLY with valid JSON, no markdown, no code fences:\n{\n  "scanTime":"ISO",\n  "topInsight":"one sentence about biggest opportunity",\n  "products":[{\n    "name":"",\n    "heatScore":0,\n    "isHot":true,\n    "isRising":false,\n    "sources":[],\n    "category":"",\n    "insight":"",\n    "suggestedAction":"",\n    "trendData":[45,48,52,55,60,65,72,78,82,85,88,90],\n    "trendWeeks":["Dec W1","Dec W2","Dec W3","Dec W4","Jan W1","Jan W2","Jan W3","Jan W4","Feb W1","Feb W2","Feb W3","Mar W1"],\n    "competitors":[{"name":"","platform":"","detail":"","url":""}]\n  }]\n}`;
 
       const response = await fetch("/api/scan", {
         method: "POST", headers: {"Content-Type":"application/json"},
@@ -448,15 +419,10 @@ Respond ONLY with valid JSON, no markdown, no code fences:
       setCurrentResults(parsed);
       const newScan = { id: Date.now(), category, market, timestamp: new Date().toLocaleString(), results: parsed };
       setCurrentScan(newScan);
-
-      // Save to compare (max 4)
       setSavedScans(prev => [newScan, ...prev].slice(0,4));
-
-      // Save to history (max 10)
       const newHistory = [newScan, ...history].slice(0,10);
       setHistory(newHistory);
       saveHistory(newHistory);
-
       setLastRun(new Date()); setStatusMsg("");
     } catch(e) { clearInterval(ticker); setError(e.message); setStatusMsg(""); }
     finally { setLoading(false); }
@@ -477,59 +443,81 @@ Respond ONLY with valid JSON, no markdown, no code fences:
   };
 
   const TABS = [
-    { id: "results", label: "📊 Results" },
-    { id: "compare", label: `⚖️ Compare${savedScans.length > 0 ? ` (${savedScans.length})` : ""}` },
-    { id: "history", label: `🕐 History${history.length > 0 ? ` (${history.length})` : ""}` },
-    { id: "export", label: "⬇️ Export" },
+    { id: "results", label: "Results" },
+    { id: "compare", label: `Compare${savedScans.length > 0 ? ` (${savedScans.length})` : ""}` },
+    { id: "history", label: `History${history.length > 0 ? ` (${history.length})` : ""}` },
+    { id: "export", label: "Export" },
   ];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        ::-webkit-scrollbar{width:4px;height:4px}
-        ::-webkit-scrollbar-track{background:#F1F5F9}
-        ::-webkit-scrollbar-thumb{background:#94A3B8;border-radius:2px}
+        body{background:#06071A}
+        ::-webkit-scrollbar{width:3px;height:3px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(255,184,0,0.3);border-radius:2px}
         @keyframes pulse-bar{0%,100%{height:6px}50%{height:20px}}
-        @keyframes slide-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes slide-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        @keyframes glow-pulse{0%,100%{box-shadow:0 0 20px #0891B240}50%{box-shadow:0 0 40px #0891B280}}
-        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-        .scan-btn:hover:not(:disabled){transform:translateY(-2px)!important;box-shadow:0 12px 40px #0891B250!important}
-        .src-chip:hover{opacity:.85;transform:scale(.97)}
-        .tab-btn:hover{background:#CBD5E1!important}
-        .exp-btn:hover{transform:translateY(-2px)!important}
-        select option{background:#F1F5F9;color:#0F172A}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+        @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,184,0,0.2),0 4px 15px rgba(255,184,0,0.15)}50%{box-shadow:0 0 45px rgba(255,184,0,0.5),0 4px 25px rgba(255,184,0,0.3)}}
+        .scan-btn:hover:not(:disabled){transform:translateY(-2px)!important;box-shadow:0 16px 50px rgba(255,184,0,0.4)!important}
+        .src-chip:hover{transform:scale(0.97)}
+        select{appearance:none;-webkit-appearance:none}
+        select option{background:#0D0E2A;color:#FFFFFF}
+        ::selection{background:rgba(255,184,0,0.2);color:#FFFFFF}
       `}</style>
 
-      <div style={{minHeight:"100vh",background:"#F8FAFC",fontFamily:"'DM Sans',sans-serif",color:"#0F172A",paddingBottom:40}}>
+      <div style={{ minHeight: "100vh", background: "#06071A", fontFamily: "'Outfit', sans-serif", color: "#FFFFFF", paddingBottom: 60 }}>
 
-        {/* ── HEADER ── */}
-        <div style={{background:"linear-gradient(180deg,#FFFFFF,#F8FAFC)",borderBottom:"1px solid #E2E8F0",padding:"16px 16px 12px",position:"sticky",top:0,zIndex:100,backdropFilter:"blur(12px)"}}>
-          <div style={{maxWidth:980,margin:"0 auto"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:32,height:32,borderRadius:8,background:"linear-gradient(135deg,#0891B2,#0E7490)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 4px 15px #0891B250",animation:"float 3s ease-in-out infinite"}}>📡</div>
+        <div style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: 700, height: 280, background: "radial-gradient(ellipse, rgba(255,184,0,0.055) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+
+        {/* HEADER */}
+        <div style={{
+          background: "rgba(6,7,26,0.88)", borderBottom: "1px solid rgba(255,255,255,0.07)",
+          padding: "14px 20px", position: "sticky", top: 0, zIndex: 100,
+          backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)"
+        }}>
+          <div style={{ maxWidth: 980, margin: "0 auto" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 34, height: 34, borderRadius: 9,
+                  background: "linear-gradient(135deg, #FFB800, #FF7A00)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 16, boxShadow: "0 4px 20px rgba(255,184,0,0.4)",
+                  animation: "float 3s ease-in-out infinite", flexShrink: 0
+                }}>📡</div>
                 <div>
-                  <div style={{fontSize:18,fontWeight:900,fontFamily:"'Syne',sans-serif",letterSpacing:"-0.5px"}}>Trend<span style={{color:"#0891B2"}}>Pulse</span></div>
-                  <div style={{fontSize:9,color:"#64748B",letterSpacing:1,textTransform:"uppercase"}}>by Fabian Stores</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Bricolage Grotesque', sans-serif", letterSpacing: "-0.5px", lineHeight: 1 }}>
+                    Trend<span style={{ color: "#FFB800" }}>Pulse</span>
+                  </div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", letterSpacing: "2px", textTransform: "uppercase", marginTop: 2 }}>by Fabian Stores</div>
                 </div>
               </div>
-              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <PulseBar active={loading} />
-                {lastRun && !loading && <span style={{fontSize:10,color:"#64748B"}}>Last scan: {lastRun.toLocaleTimeString()}</span>}
-                {/* Share buttons */}
+                {lastRun && !loading && (
+                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", fontFamily: "'DM Mono', monospace" }}>{lastRun.toLocaleTimeString()}</span>
+                )}
                 {currentScan && (
-                  <div style={{display:"flex",gap:5}}>
-                    <button onClick={() => whatsappShare(currentScan)} style={{padding:"4px 10px",borderRadius:6,background:"#25D36620",border:"1px solid #25D36640",color:"#25D366",fontSize:10,fontWeight:700,cursor:"pointer"}}>📲 WhatsApp</button>
-                    <button onClick={() => shareReport(currentScan)} style={{padding:"4px 10px",borderRadius:6,background:"#1877F220",border:"1px solid #1877F240",color:"#1877F2",fontSize:10,fontWeight:700,cursor:"pointer"}}>🔗 Share</button>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => whatsappShare(currentScan)} style={{ padding: "5px 11px", borderRadius: 7, background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.22)", color: "#25D366", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>📲 WhatsApp</button>
+                    <button onClick={() => shareReport(currentScan)} style={{ padding: "5px 11px", borderRadius: 7, background: "rgba(78,205,196,0.1)", border: "1px solid rgba(78,205,196,0.22)", color: "#4ECDC4", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>🔗 Share</button>
                   </div>
                 )}
-                {/* Tabs */}
-                <div style={{display:"flex",gap:2,background:"#F1F5F9",borderRadius:8,padding:3}}>
+                <div style={{ display: "flex", gap: 2, background: "rgba(255,255,255,0.05)", borderRadius: 9, padding: 3, border: "1px solid rgba(255,255,255,0.07)" }}>
                   {TABS.map(tab => (
-                    <button key={tab.id} onClick={()=>setView(tab.id)} className="tab-btn" style={{padding:"4px 9px",borderRadius:5,border:"none",fontSize:10,fontWeight:600,cursor:"pointer",transition:"all 0.15s",background:view===tab.id?"#0891B2":"transparent",color:view===tab.id?"#fff":"#64748B",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}}>{tab.label}</button>
+                    <button key={tab.id} onClick={() => setView(tab.id)} style={{
+                      padding: "5px 11px", borderRadius: 7, border: "none",
+                      fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
+                      background: view === tab.id ? "#FFB800" : "transparent",
+                      color: view === tab.id ? "#06071A" : "rgba(255,255,255,0.38)",
+                      fontFamily: "'Outfit', sans-serif", whiteSpace: "nowrap"
+                    }}>{tab.label}</button>
                   ))}
                 </div>
               </div>
@@ -537,177 +525,215 @@ Respond ONLY with valid JSON, no markdown, no code fences:
           </div>
         </div>
 
-        <div style={{maxWidth:980,margin:"0 auto",padding:"16px 14px 0"}}>
+        <div style={{ maxWidth: 980, margin: "0 auto", padding: "20px 16px 0", position: "relative", zIndex: 1 }}>
 
-          {/* ── RESULTS VIEW ── */}
-          {view==="results" && <>
-            {/* Controls */}
-            <div style={{background:"linear-gradient(135deg,#FFFFFF,#F8FAFC)",border:"1px solid #CBD5E1",borderRadius:13,padding:15,marginBottom:14}}>
-              <div style={{display:"flex",gap:9,marginBottom:11,flexWrap:"wrap"}}>
-                <div style={{flex:1,minWidth:160}}>
-                  <label style={{fontSize:9,color:"#64748B",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Category</label>
-                  <select value={category} onChange={e=>setCategory(e.target.value)} style={{width:"100%",background:"#F8FAFC",border:"1px solid #CBD5E1",borderRadius:7,padding:"7px 9px",color:"#0F172A",fontSize:12,outline:"none"}}>
-                    {CATEGORIES.map(c=><option key={c}>{c}</option>)}
-                  </select>
+          {/* RESULTS VIEW */}
+          {view === "results" && <>
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 18, marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <label style={{ fontSize: 9, color: "rgba(255,255,255,0.32)", textTransform: "uppercase", letterSpacing: "1.5px", display: "block", marginBottom: 6 }}>Category</label>
+                  <div style={{ position: "relative" }}>
+                    <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9, padding: "9px 32px 9px 12px", color: "#FFFFFF", fontSize: 13, outline: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", transition: "border-color 0.2s" }}
+                      onFocus={e => e.target.style.borderColor = "rgba(255,184,0,0.4)"}
+                      onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}>
+                      {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                    <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.28)", pointerEvents: "none", fontSize: 10 }}>▾</div>
+                  </div>
                 </div>
-                <div style={{flex:1,minWidth:110}}>
-                  <label style={{fontSize:9,color:"#64748B",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Market</label>
-                  <select value={market} onChange={e=>setMarket(e.target.value)} style={{width:"100%",background:"#F8FAFC",border:"1px solid #CBD5E1",borderRadius:7,padding:"7px 9px",color:"#0F172A",fontSize:12,outline:"none"}}>
-                    {MARKETS.map(m=><option key={m}>{m}</option>)}
-                  </select>
+                <div style={{ flex: 1, minWidth: 120 }}>
+                  <label style={{ fontSize: 9, color: "rgba(255,255,255,0.32)", textTransform: "uppercase", letterSpacing: "1.5px", display: "block", marginBottom: 6 }}>Market</label>
+                  <div style={{ position: "relative" }}>
+                    <select value={market} onChange={e => setMarket(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9, padding: "9px 32px 9px 12px", color: "#FFFFFF", fontSize: 13, outline: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", transition: "border-color 0.2s" }}
+                      onFocus={e => e.target.style.borderColor = "rgba(255,184,0,0.4)"}
+                      onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}>
+                      {MARKETS.map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.28)", pointerEvents: "none", fontSize: 10 }}>▾</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Sources */}
-              <div style={{marginBottom:12}}>
-                <label style={{fontSize:9,color:"#64748B",textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>Sources</label>
-                <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                  {SOURCES.map(src=>{const active=activeSources.includes(src.id);return(
-                    <button key={src.id} onClick={()=>toggleSource(src.id)} className="src-chip" style={{padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:600,cursor:"pointer",transition:"all 0.2s",background:active?`${src.color}20`:"#F1F5F9",border:`1px solid ${active?src.color:"#CBD5E1"}`,color:active?src.color:"#64748B"}}>{src.icon} {src.label}</button>
-                  );})}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 9, color: "rgba(255,255,255,0.32)", textTransform: "uppercase", letterSpacing: "1.5px", display: "block", marginBottom: 8 }}>Sources</label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {SOURCES.map(src => {
+                    const active = activeSources.includes(src.id);
+                    return (
+                      <button key={src.id} onClick={() => toggleSource(src.id)} className="src-chip" style={{ padding: "5px 12px", borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: "pointer", transition: "all 0.2s", background: active ? `${src.color}15` : "rgba(255,255,255,0.03)", border: `1px solid ${active ? src.color + "45" : "rgba(255,255,255,0.08)"}`, color: active ? src.color : "rgba(255,255,255,0.32)", fontFamily: "'Outfit', sans-serif" }}>{src.icon} {src.label}</button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <button onClick={runSearch} disabled={loading||activeSources.length===0} className="scan-btn" style={{width:"100%",padding:"11px",borderRadius:9,background:loading?"#CBD5E1":"linear-gradient(135deg,#0891B2,#0E7490)",border:"none",color:loading?"#64748B":"#fff",fontSize:14,fontWeight:800,cursor:loading?"not-allowed":"pointer",fontFamily:"'Syne',sans-serif",transition:"all 0.2s",animation:!loading&&!currentResults?"glow-pulse-teal 2s infinite":"none",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                {loading?<><div style={{width:14,height:14,border:"2px solid #64748B",borderTopColor:"#0F172A",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>{statusMsg}</>:<>📡 Run Trend Scan</>}
+              <button onClick={runSearch} disabled={loading || activeSources.length === 0} className="scan-btn" style={{ width: "100%", padding: "13px", borderRadius: 11, border: "none", background: loading ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #FFB800, #FF8C00)", color: loading ? "rgba(255,255,255,0.28)" : "#06071A", fontSize: 15, fontWeight: 800, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Bricolage Grotesque', sans-serif", transition: "all 0.25s", animation: !loading && !currentResults ? "glow 2.5s infinite" : "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                {loading ? (
+                  <><div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.15)", borderTopColor: "rgba(255,255,255,0.6)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} /><span style={{ fontSize: 13 }}>{statusMsg}</span></>
+                ) : (
+                  <>📡 Run Trend Scan</>
+                )}
               </button>
             </div>
 
-            {error && <div style={{background:"#2a0f0f",border:"1px solid #7f1d1d",borderRadius:10,padding:"10px 14px",marginBottom:12,color:"#fca5a5",fontSize:12}}>⚠️ {error}</div>}
+            {error && (
+              <div style={{ background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.22)", borderRadius: 11, padding: "11px 15px", marginBottom: 14, color: "#FF4757", fontSize: 12 }}>⚠️ {error}</div>
+            )}
 
-            {currentResults && <div style={{animation:"slide-in 0.4s ease"}}>
-              {currentResults.topInsight && (
-                <div style={{background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"flex-start",gap:8}}>
-                  <span style={{fontSize:16}}>🎯</span>
-                  <div>
-                    <div style={{fontSize:9,color:"#16A34A",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Top Opportunity</div>
-                    <div style={{fontSize:12,color:"#166534",lineHeight:1.55}}>{currentResults.topInsight}</div>
+            {currentResults && (
+              <div style={{ animation: "slide-in 0.4s ease" }}>
+                {currentResults.topInsight && (
+                  <div style={{ background: "rgba(46,213,115,0.07)", border: "1px solid rgba(46,213,115,0.18)", borderRadius: 12, padding: "12px 16px", marginBottom: 14, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ fontSize: 18 }}>🎯</span>
+                    <div>
+                      <div style={{ fontSize: 9, color: "#2ED573", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 3 }}>Top Opportunity</div>
+                      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.78)", lineHeight: 1.6 }}>{currentResults.topInsight}</div>
+                    </div>
                   </div>
+                )}
+
+                <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                  {[
+                    { label: "Products", val: currentResults.products?.length || 0, color: "#FFB800" },
+                    { label: "Sources", val: activeSources.length, color: "#4ECDC4" },
+                    { label: "Market", val: market, color: "#2ED573" },
+                    { label: "Hot", val: (currentResults.products || []).filter(p => p.isHot).length, color: "#FF4757" }
+                  ].map(st => (
+                    <div key={st.label} style={{ flex: 1, minWidth: 80, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: st.color, fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>{st.val}</div>
+                      <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", marginTop: 3, letterSpacing: "1px", textTransform: "uppercase" }}>{st.label}</div>
+                    </div>
+                  ))}
                 </div>
-              )}
 
-              <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
-                {[{label:"Products",val:currentResults.products?.length||0,color:"#0891B2"},{label:"Sources",val:activeSources.length,color:"#1877F2"},{label:"Market",val:market,color:"#34A853"},{label:"🔥 Hot",val:(currentResults.products||[]).filter(p=>p.isHot).length,color:"#D97706"}].map(st=>(
-                  <div key={st.label} style={{flex:1,minWidth:80,background:"#F1F5F9",border:"1px solid #CBD5E1",borderRadius:8,padding:"7px 10px"}}>
-                    <div style={{fontSize:16,fontWeight:900,color:st.color,fontFamily:"monospace"}}>{st.val}</div>
-                    <div style={{fontSize:9,color:"#64748B",marginTop:1}}>{st.label}</div>
-                  </div>
-                ))}
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.22)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>Tap to expand · Links sorted by sales volume</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {(currentResults.products || []).map((p, i) => <TrendCard key={i} product={p} index={i} market={market} />)}
+                </div>
+
+                <button onClick={runSearch} style={{ marginTop: 16, width: "100%", padding: "10px", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "rgba(255,255,255,0.28)", fontSize: 12, cursor: "pointer", transition: "all 0.2s", fontFamily: "'Outfit', sans-serif" }}
+                  onMouseEnter={e => { e.target.style.borderColor = "rgba(255,184,0,0.35)"; e.target.style.color = "#FFB800"; }}
+                  onMouseLeave={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.color = "rgba(255,255,255,0.28)"; }}>↻ Refresh Scan</button>
               </div>
+            )}
 
-              <div style={{fontSize:9,color:"#64748B",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Tap product · Links sorted by sales volume · Expand for trend graph & competitors</div>
-              <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                {(currentResults.products||[]).map((p,i)=><TrendCard key={i} product={p} index={i} market={market}/>)}
-              </div>
-              <button onClick={runSearch} style={{marginTop:16,width:"100%",padding:"9px",background:"transparent",border:"1px solid #CBD5E1",borderRadius:8,color:"#64748B",fontSize:12,cursor:"pointer",transition:"all 0.2s"}}
-                onMouseEnter={e=>{e.target.style.borderColor="#0891B2";e.target.style.color="#0891B2";}}
-                onMouseLeave={e=>{e.target.style.borderColor="#CBD5E1";e.target.style.color="#64748B";}}>↻ Refresh Scan</button>
-            </div>}
-
-            {!currentResults&&!loading&&!error&&(
-              <div style={{textAlign:"center",padding:"44px 20px"}}>
-                <div style={{fontSize:42,marginBottom:12,opacity:.4}}>📡</div>
-                <div style={{fontSize:13,fontWeight:700,color:"#94A3B8",fontFamily:"'Syne',sans-serif"}}>Ready to scan</div>
-                <div style={{fontSize:11,marginTop:4,color:"#94A3B8"}}>Select category & market, then hit Run Trend Scan</div>
-                {history.length > 0 && <button onClick={()=>setView("history")} style={{marginTop:14,padding:"7px 16px",background:"transparent",border:"1px solid #CBD5E1",borderRadius:7,color:"#64748B",fontSize:11,cursor:"pointer"}}>🕐 View Past Scans ({history.length})</button>}
+            {!currentResults && !loading && !error && (
+              <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.2, animation: "float 3s ease-in-out infinite" }}>📡</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "rgba(255,255,255,0.28)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>Ready to scan</div>
+                <div style={{ fontSize: 12, marginTop: 6, color: "rgba(255,255,255,0.18)" }}>Select category & market, then hit Run Trend Scan</div>
+                {history.length > 0 && (
+                  <button onClick={() => setView("history")} style={{ marginTop: 16, padding: "8px 18px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.32)", fontSize: 12, cursor: "pointer", transition: "all 0.2s" }}
+                    onMouseEnter={e => { e.target.style.borderColor = "rgba(255,184,0,0.3)"; e.target.style.color = "#FFB800"; }}
+                    onMouseLeave={e => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.color = "rgba(255,255,255,0.32)"; }}>
+                    View Past Scans ({history.length})
+                  </button>
+                )}
               </div>
             )}
           </>}
 
-          {/* ── HISTORY VIEW ── */}
-          {view==="history" && <div>
-            <div style={{marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-              <div>
-                <div style={{fontSize:15,fontWeight:800,fontFamily:"'Syne',sans-serif"}}>🕐 Scan History</div>
-                <div style={{fontSize:11,color:"#64748B",marginTop:2}}>Last 10 scans — click Load to revisit any scan</div>
-              </div>
-              {history.length>0&&<button onClick={()=>{setHistory([]);saveHistory([]);}} style={{padding:"5px 11px",borderRadius:7,background:"transparent",border:"1px solid #CBD5E1",color:"#64748B",fontSize:11,cursor:"pointer"}}>Clear All</button>}
-            </div>
-            {history.length===0?(
-              <div style={{textAlign:"center",padding:"44px 20px"}}>
-                <div style={{fontSize:36,marginBottom:12,opacity:.4}}>🕐</div>
-                <div style={{fontSize:13,fontWeight:700,color:"#94A3B8",fontFamily:"'Syne',sans-serif"}}>No history yet</div>
-                <div style={{fontSize:11,color:"#94A3B8",marginTop:4}}>Run your first scan to start building history</div>
-                <button onClick={()=>setView("results")} style={{marginTop:13,padding:"7px 16px",background:"#0891B2",border:"none",borderRadius:7,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Go to Results →</button>
-              </div>
-            ):(
-              <div style={{display:"flex",flexDirection:"column",gap:9}}>
-                {history.map(scan=><HistoryCard key={scan.id} scan={scan} onLoad={loadFromHistory} onDelete={deleteFromHistory}/>)}
-              </div>
-            )}
-          </div>}
-
-          {/* ── COMPARE VIEW ── */}
-          {view==="compare" && <div>
-            <div style={{marginBottom:13,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-              <div>
-                <div style={{fontSize:15,fontWeight:800,fontFamily:"'Syne',sans-serif"}}>⚖️ Comparison View</div>
-                <div style={{fontSize:11,color:"#64748B",marginTop:2}}>Run multiple scans to compare side by side</div>
-              </div>
-              {savedScans.length>0&&<button onClick={()=>setSavedScans([])} style={{padding:"5px 11px",borderRadius:7,background:"transparent",border:"1px solid #CBD5E1",color:"#64748B",fontSize:11,cursor:"pointer"}}>Clear All</button>}
-            </div>
-            {savedScans.length===0?(
-              <div style={{textAlign:"center",padding:"44px 20px"}}>
-                <div style={{fontSize:36,marginBottom:12,opacity:.4}}>⚖️</div>
-                <div style={{fontSize:13,fontWeight:700,color:"#94A3B8",fontFamily:"'Syne',sans-serif"}}>No scans to compare</div>
-                <div style={{fontSize:11,color:"#94A3B8",marginTop:4}}>Run 2+ scans — they auto-save here for comparison</div>
-                <button onClick={()=>setView("results")} style={{marginTop:13,padding:"7px 16px",background:"#0891B2",border:"none",borderRadius:7,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Go to Results →</button>
-              </div>
-            ):(
-              <div style={{display:"flex",gap:11,overflowX:"auto",paddingBottom:10,alignItems:"flex-start"}}>
-                {savedScans.map((scan,i)=><CompareColumn key={scan.id} scan={scan} index={i} onRemove={(idx)=>setSavedScans(prev=>prev.filter((_,ii)=>ii!==idx))}/>)}
-              </div>
-            )}
-          </div>}
-
-          {/* ── EXPORT VIEW ── */}
-          {view==="export" && <div>
-            <div style={{marginBottom:14}}>
-              <div style={{fontSize:15,fontWeight:800,fontFamily:"'Syne',sans-serif"}}>⬇️ Export & Share</div>
-              <div style={{fontSize:11,color:"#64748B",marginTop:2}}>Download or share your trend data</div>
-            </div>
-            {savedScans.length===0?(
-              <div style={{textAlign:"center",padding:"44px 20px"}}>
-                <div style={{fontSize:36,marginBottom:12,opacity:.4}}>📂</div>
-                <div style={{fontSize:13,fontWeight:700,color:"#94A3B8",fontFamily:"'Syne',sans-serif"}}>No data yet</div>
-                <button onClick={()=>setView("results")} style={{marginTop:13,padding:"7px 16px",background:"#0891B2",border:"none",borderRadius:7,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Go to Results →</button>
-              </div>
-            ):(
-              <>
-                <div style={{background:"#F1F5F9",border:"1px solid #CBD5E1",borderRadius:10,padding:13,marginBottom:14}}>
-                  <div style={{fontSize:9,color:"#64748B",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Saved Scans ({savedScans.length})</div>
-                  {savedScans.map(scan=>(
-                    <div key={scan.id} style={{display:"flex",justifyContent:"space-between",padding:"6px 9px",background:"#FFFFFF",borderRadius:6,marginBottom:5}}>
-                      <div><span style={{fontSize:12,fontWeight:700,color:"#0F172A"}}>{scan.category}</span><span style={{fontSize:10,color:"#64748B",marginLeft:7}}>{scan.market} · {scan.timestamp}</span></div>
-                      <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                        <span style={{fontSize:10,color:"#0891B2"}}>{scan.results?.products?.length||0} products</span>
-                        <button onClick={()=>whatsappShare(scan)} style={{padding:"3px 8px",borderRadius:5,background:"#25D36620",border:"1px solid #25D36640",color:"#25D366",fontSize:9,fontWeight:700,cursor:"pointer"}}>📲</button>
-                        <button onClick={()=>shareReport(scan)} style={{padding:"3px 8px",borderRadius:5,background:"#1877F220",border:"1px solid #1877F240",color:"#1877F2",fontSize:9,fontWeight:700,cursor:"pointer"}}>🔗</button>
-                      </div>
-                    </div>
-                  ))}
+          {/* HISTORY VIEW */}
+          {view === "history" && (
+            <div>
+              <div style={{ marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Bricolage Grotesque', sans-serif" }}>Scan History</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.32)", marginTop: 3 }}>Last 10 scans — click Load to revisit</div>
                 </div>
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {[
-                    {icon:"📊",label:"Export as CSV",sub:"Open in Excel or Google Sheets",color:"#34A853",action:()=>exportToCSV(savedScans)},
-                    {icon:"🌐",label:"Export as HTML Report",sub:"Formatted report with clickable links",color:"#1877F2",action:()=>exportToHTML(savedScans)},
-                    {icon:"📋",label:"Export as JSON",sub:"Raw data for developers",color:"#9333EA",action:()=>exportToJSON(savedScans)},
-                  ].map(opt=>(
-                    <button key={opt.label} onClick={opt.action} className="exp-btn" style={{display:"flex",alignItems:"center",gap:12,padding:"13px 15px",background:"linear-gradient(135deg,#FFFFFF,#F8FAFC)",border:`1px solid ${opt.color}40`,borderRadius:10,cursor:"pointer",transition:"all 0.2s",textAlign:"left"}}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor=opt.color;}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor=`${opt.color}40`;}}>
-                      <div style={{width:36,height:36,borderRadius:8,background:`${opt.color}20`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{opt.icon}</div>
-                      <div>
-                        <div style={{fontSize:13,fontWeight:700,color:opt.color}}>{opt.label}</div>
-                        <div style={{fontSize:10,color:"#64748B",marginTop:1}}>{opt.sub}</div>
-                      </div>
-                      <div style={{marginLeft:"auto",color:"#64748B",fontSize:14}}>↓</div>
-                    </button>
-                  ))}
+                {history.length > 0 && <button onClick={() => { setHistory([]); saveHistory([]); }} style={{ padding: "6px 13px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.32)", fontSize: 11, cursor: "pointer" }}>Clear All</button>}
+              </div>
+              {history.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                  <div style={{ fontSize: 40, marginBottom: 14, opacity: 0.18 }}>🕐</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.22)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>No history yet</div>
+                  <button onClick={() => setView("results")} style={{ marginTop: 14, padding: "8px 18px", background: "#FFB800", border: "none", borderRadius: 8, color: "#06071A", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Start Scanning →</button>
                 </div>
-              </>
-            )}
-          </div>}
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {history.map(scan => <HistoryCard key={scan.id} scan={scan} onLoad={loadFromHistory} onDelete={deleteFromHistory} />)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* COMPARE VIEW */}
+          {view === "compare" && (
+            <div>
+              <div style={{ marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Bricolage Grotesque', sans-serif" }}>Comparison</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.32)", marginTop: 3 }}>Run multiple scans to compare side by side</div>
+                </div>
+                {savedScans.length > 0 && <button onClick={() => setSavedScans([])} style={{ padding: "6px 13px", borderRadius: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.32)", fontSize: 11, cursor: "pointer" }}>Clear All</button>}
+              </div>
+              {savedScans.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                  <div style={{ fontSize: 40, marginBottom: 14, opacity: 0.18 }}>⚖️</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.22)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>No scans to compare</div>
+                  <button onClick={() => setView("results")} style={{ marginTop: 14, padding: "8px 18px", background: "#FFB800", border: "none", borderRadius: 8, color: "#06071A", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Run a Scan →</button>
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, alignItems: "flex-start" }}>
+                  {savedScans.map((scan, i) => <CompareColumn key={scan.id} scan={scan} index={i} onRemove={(idx) => setSavedScans(prev => prev.filter((_, ii) => ii !== idx))} />)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* EXPORT VIEW */}
+          {view === "export" && (
+            <div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Bricolage Grotesque', sans-serif" }}>Export & Share</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.32)", marginTop: 3 }}>Download or share your trend data</div>
+              </div>
+              {savedScans.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                  <div style={{ fontSize: 40, marginBottom: 14, opacity: 0.18 }}>📂</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.22)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>No data yet</div>
+                  <button onClick={() => setView("results")} style={{ marginTop: 14, padding: "8px 18px", background: "#FFB800", border: "none", borderRadius: 8, color: "#06071A", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Go to Results →</button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                    <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 10 }}>Saved Scans ({savedScans.length})</div>
+                    {savedScans.map(scan => (
+                      <div key={scan.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 7, marginBottom: 6, alignItems: "center" }}>
+                        <div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF", fontFamily: "'Bricolage Grotesque', sans-serif" }}>{scan.category}</span>
+                          <span style={{ fontSize: 10, color: "rgba(255,255,255,0.32)", marginLeft: 8, fontFamily: "'DM Mono', monospace" }}>{scan.market} · {scan.timestamp}</span>
+                        </div>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          <span style={{ fontSize: 10, color: "#FFB800", fontFamily: "'DM Mono', monospace" }}>{scan.results?.products?.length || 0} products</span>
+                          <button onClick={() => whatsappShare(scan)} style={{ padding: "3px 8px", borderRadius: 5, background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.22)", color: "#25D366", fontSize: 9, fontWeight: 700, cursor: "pointer" }}>📲</button>
+                          <button onClick={() => shareReport(scan)} style={{ padding: "3px 8px", borderRadius: 5, background: "rgba(78,205,196,0.1)", border: "1px solid rgba(78,205,196,0.22)", color: "#4ECDC4", fontSize: 9, fontWeight: 700, cursor: "pointer" }}>🔗</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[
+                      { icon: "📊", label: "Export as CSV", sub: "Open in Excel or Google Sheets", color: "#2ED573", action: () => exportToCSV(savedScans) },
+                      { icon: "🌐", label: "Export as HTML Report", sub: "Formatted report with clickable links", color: "#4ECDC4", action: () => exportToHTML(savedScans) },
+                      { icon: "📋", label: "Export as JSON", sub: "Raw data for developers", color: "#A67CFF", action: () => exportToJSON(savedScans) },
+                    ].map(opt => (
+                      <button key={opt.label} onClick={opt.action} style={{ display: "flex", alignItems: "center", gap: 14, padding: "15px 16px", background: "rgba(255,255,255,0.03)", border: `1px solid ${opt.color}1a`, borderRadius: 12, cursor: "pointer", transition: "all 0.2s", textAlign: "left" }}
+                        onMouseEnter={e => { e.currentTarget.style.background = `${opt.color}08`; e.currentTarget.style.borderColor = `${opt.color}38`; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = `${opt.color}1a`; e.currentTarget.style.transform = "translateY(0)"; }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 9, background: `${opt.color}14`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{opt.icon}</div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: opt.color, fontFamily: "'Bricolage Grotesque', sans-serif" }}>{opt.label}</div>
+                          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", marginTop: 2 }}>{opt.sub}</div>
+                        </div>
+                        <div style={{ marginLeft: "auto", color: "rgba(255,255,255,0.18)", fontSize: 14 }}>↓</div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
         </div>
       </div>
